@@ -1,5 +1,7 @@
 package com.pduarteo.reserva_salas.service;
 
+import com.pduarteo.reserva_salas.dto.CriarSalaDTO;
+import com.pduarteo.reserva_salas.dto.RetornoSalaDTO;
 import com.pduarteo.reserva_salas.model.Sala;
 import com.pduarteo.reserva_salas.repository.SalaRepository;
 import com.pduarteo.reserva_salas.support.exceptions.NomeAndarAlreadyExistsException;
@@ -15,40 +17,86 @@ public class SalaService {
     @Autowired
     private SalaRepository salaRepository;
 
-    public Sala criarSala(Sala dadosSala){
+    public RetornoSalaDTO criarSala(CriarSalaDTO dadosSala){
 
-        if(salaRepository.existsByNomeIgnoreCaseAndAndar(dadosSala.getNome(), dadosSala.getAndar())){
-            throw new NomeAndarAlreadyExistsException(dadosSala.getNome(), dadosSala.getAndar());
+        if(salaRepository.existsByNomeIgnoreCaseAndAndar(dadosSala.nome(), dadosSala.andar())){
+            throw new NomeAndarAlreadyExistsException(dadosSala.nome(), dadosSala.andar());
         }
 
         Sala sala = new Sala();
-        sala.setNome(dadosSala.getNome());
-        sala.setCapacidade(dadosSala.getCapacidade());
-        sala.setAndar(dadosSala.getAndar());
-        sala.setRecursos(dadosSala.getRecursos());
+        sala.setNome(dadosSala.nome());
+        sala.setCapacidade(dadosSala.capacidade());
+        sala.setAndar(dadosSala.andar());
+        sala.setRecursos(dadosSala.recursos());
 
-        return salaRepository.save(sala);
+        salaRepository.save(sala);
+        return new RetornoSalaDTO(
+                sala.getId(),
+                sala.getNome(),
+                sala.getCapacidade(),
+                sala.getAndar(),
+                sala.getRecursos(),
+                sala.getAtiva()
+        );
     }
 
-    public Sala buscarSalaPorId(Long id){
-        return salaRepository.findById(id).orElseThrow(() -> new SalaNotFoundException(id));
+    public RetornoSalaDTO buscarSalaPorId(Long id){
+        return salaRepository.findById(id)
+                .map(sala -> new RetornoSalaDTO(
+                        sala.getId(),
+                        sala.getNome(),
+                        sala.getCapacidade(),
+                        sala.getAndar(),
+                        sala.getRecursos(),
+                        sala.getAtiva()
+                ))
+                .orElseThrow(() -> new SalaNotFoundException(id));
     }
 
-    public List<Sala> listarSalas() {
-        return salaRepository.findAll();
+    public List<RetornoSalaDTO> listarSalas() {
+        List<Sala> salas = salaRepository.findAll();
+        return salas.stream()
+                .map(sala -> new RetornoSalaDTO(
+                        sala.getId(),
+                        sala.getNome(),
+                        sala.getCapacidade(),
+                        sala.getAndar(),
+                        sala.getRecursos(),
+                        sala.getAtiva()
+                ))
+                .toList();
     }
 
-    public Sala atualizarSala(Long id, Sala sala){
-        Sala salaExistente = buscarSalaPorId(id);
-        salaExistente.setNome(sala.getNome());
-        salaExistente.setCapacidade(sala.getCapacidade());
-        salaExistente.setAndar(sala.getAndar());
-        salaExistente.setRecursos(sala.getRecursos());
-        return salaRepository.save(salaExistente);
+    public RetornoSalaDTO atualizarSala(Long id, CriarSalaDTO sala){
+        Sala salaExistente = salaRepository.findById(id)
+                .orElseThrow(() -> new SalaNotFoundException(id));
+        salaExistente.setNome(sala.nome());
+        salaExistente.setCapacidade(sala.capacidade());
+        salaExistente.setAndar(sala.andar());
+        salaExistente.setRecursos(sala.recursos());
+        salaRepository.save(salaExistente);
+        return new RetornoSalaDTO(
+                salaExistente.getId(),
+                salaExistente.getNome(),
+                salaExistente.getCapacidade(),
+                salaExistente.getAndar(),
+                salaExistente.getRecursos(),
+                salaExistente.getAtiva()
+        );
     }
 
-    public void deletarSala(Long id){
-        Sala sala = buscarSalaPorId(id);
+    public RetornoSalaDTO deletarSala(Long id){
+        Sala sala = salaRepository.findById(id)
+                .orElseThrow(() -> new SalaNotFoundException(id));
+        RetornoSalaDTO retorno = new RetornoSalaDTO(
+                sala.getId(),
+                sala.getNome(),
+                sala.getCapacidade(),
+                sala.getAndar(),
+                sala.getRecursos(),
+                sala.getAtiva()
+        );
         salaRepository.delete(sala);
+        return retorno;
     }
 }

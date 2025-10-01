@@ -1,7 +1,10 @@
 package com.pduarteo.reserva_salas.controller;
 
+import com.pduarteo.reserva_salas.dto.CriarSalaDTO;
+import com.pduarteo.reserva_salas.dto.RetornoSalaDTO;
 import com.pduarteo.reserva_salas.model.Sala;
 import com.pduarteo.reserva_salas.service.SalaService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,28 +21,28 @@ public class SalaController {
     private SalaService salaService;
 
     @GetMapping("/{id}")
-    public ResponseEntity<Sala> buscarSalaPorId(@PathVariable Long id){
+    public ResponseEntity<RetornoSalaDTO> buscarSalaPorId(@PathVariable Long id){
         return ResponseEntity.ok().body(salaService.buscarSalaPorId(id));
     }
 
     @GetMapping
-    public ResponseEntity<List<Sala>> buscarSalas(){
+    public ResponseEntity<List<RetornoSalaDTO>> buscarSalas(){
         return ResponseEntity.ok().body(salaService.listarSalas());
     }
 
     @PostMapping
-    public ResponseEntity<Sala> criarSala(@RequestBody Sala dadosSala){
-        Sala novaSala = salaService.criarSala(dadosSala);
+    public ResponseEntity<RetornoSalaDTO> criarSala(@RequestBody @Valid CriarSalaDTO dadosSala){
+        RetornoSalaDTO novaSala = salaService.criarSala(dadosSala);
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
                 .path("/{id}")
-                .buildAndExpand(novaSala.getId())
+                .buildAndExpand(novaSala.id())
                 .toUri();
         return ResponseEntity.created(location).body(novaSala);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Sala> atualizarSala(@PathVariable Long id, @RequestBody Sala sala) {
+    public ResponseEntity<RetornoSalaDTO> atualizarSala(@PathVariable Long id, @RequestBody @Valid CriarSalaDTO sala) {
         return ResponseEntity.ok().body(salaService.atualizarSala(id, sala));
     }
 
