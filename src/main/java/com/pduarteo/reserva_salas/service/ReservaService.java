@@ -9,6 +9,8 @@ import com.pduarteo.reserva_salas.repository.SalaRepository;
 import com.pduarteo.reserva_salas.support.exceptions.RegraNegocioException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -17,6 +19,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.DayOfWeek;
+import java.util.List;
 
 /**
  * Serviço responsável pela lógica de negócio das reservas de salas.
@@ -39,7 +42,7 @@ public class ReservaService {
      * @throws RegraNegocioException em caso de violação de regras de negócio
      */
     @Transactional
-    public RetornoReservaDTO criar(CriarReservaDTO dto) {
+    public RetornoReservaDTO criarReserva(CriarReservaDTO dto) {
         // Busca a sala e valida se está ativa
         Sala sala = salaRepository.findById(dto.salaId())
                 .filter(Sala::getAtiva)
@@ -102,7 +105,7 @@ public class ReservaService {
      * @throws RegraNegocioException se a reserva não existir ou já tiver iniciado
      */
     @Transactional
-    public RetornoReservaDTO cancelar(Long id) {
+    public RetornoReservaDTO cancelarReserva(Long id) {
         Reserva reserva = reservaRepository.findById(id)
                 .orElseThrow(() -> new RegraNegocioException("Reserva não encontrada"));
 
@@ -125,6 +128,91 @@ public class ReservaService {
         );
         reservaRepository.delete(reserva);
         return retorno;
+    }
+
+    /**
+     * Lista todas as reservas de forma paginada.
+     * Utiliza o Pageable para retornar uma página de reservas convertidas para o DTO de retorno.
+     * @param pageable informações de paginação (página, tamanho, ordenação)
+     * @return página de reservas no formato RetornoReservaDTO
+     */
+    public Page<RetornoReservaDTO> listarReservas(Pageable pageable) {
+        return reservaRepository.findAll(pageable).map(reserva -> new RetornoReservaDTO(
+                reserva.getId(),
+                reserva.getSalaId(),
+                reserva.getDataReserva(),
+                reserva.getHoraInicio(),
+                reserva.getHoraFim(),
+                reserva.getResponsavel(),
+                reserva.getEmailResponsavel(),
+                reserva.getDescricao(),
+                reserva.getQuantidadePessoas()
+        ));
+    }
+
+    /**
+     * Busca uma reserva pelo seu identificador único.
+     * Retorna o DTO correspondente ou lança exceção se não encontrada.
+     * @param id identificador da reserva
+     * @return RetornoReservaDTO com os dados da reserva
+     * @throws RegraNegocioException se a reserva não existir
+     */
+    public RetornoReservaDTO buscarReservaPorId(Long id) {
+        Reserva reserva = reservaRepository.findById(id)
+                .orElseThrow(() -> new RegraNegocioException("Reserva não encontrada"));
+        return new RetornoReservaDTO(
+                reserva.getId(),
+                reserva.getSalaId(),
+                reserva.getDataReserva(),
+                reserva.getHoraInicio(),
+                reserva.getHoraFim(),
+                reserva.getResponsavel(),
+                reserva.getEmailResponsavel(),
+                reserva.getDescricao(),
+                reserva.getQuantidadePessoas()
+        );
+    }
+
+    /**
+     * Lista todas as reservas de uma sala específica.
+     * Retorna uma lista de DTOs de reservas associadas ao id da sala.
+     * @param salaId identificador da sala
+     * @return lista de reservas no formato RetornoReservaDTO
+     */
+    public List<RetornoReservaDTO> listarReservasPorSalaId(Long salaId) {
+        List<Reserva> reservas = reservaRepository.findAllBySalaId(salaId);
+        return reservas.stream().map(reserva -> new RetornoReservaDTO(
+                reserva.getId(),
+                reserva.getSalaId(),
+                reserva.getDataReserva(),
+                reserva.getHoraInicio(),
+                reserva.getHoraFim(),
+                reserva.getResponsavel(),
+                reserva.getEmailResponsavel(),
+                reserva.getDescricao(),
+                reserva.getQuantidadePessoas()
+        )).toList();
+    }
+
+    /**
+     * Lista todas as reservas feitas por um responsável específico (email).
+     * Retorna uma lista de DTOs de reservas associadas ao email informado.
+     * @param email email do responsável pela reserva
+     * @return lista de reservas no formato RetornoReservaDTO
+     */
+    public List<RetornoReservaDTO> listarReservasPorEmailResponsavel(String email) {
+        List<Reserva> reservas = reservaRepository.findAllByEmailResponsavel(email);
+        return reservas.stream().map(reserva -> new RetornoReservaDTO(
+                reserva.getId(),
+                reserva.getSalaId(),
+                reserva.getDataReserva(),
+                reserva.getHoraInicio(),
+                reserva.getHoraFim(),
+                reserva.getResponsavel(),
+                reserva.getEmailResponsavel(),
+                reserva.getDescricao(),
+                reserva.getQuantidadePessoas()
+        )).toList();
     }
 
     /**
