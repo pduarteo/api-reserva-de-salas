@@ -1,7 +1,6 @@
 package com.pduarteo.reserva_salas.support;
 
-import com.pduarteo.reserva_salas.support.exceptions.NomeAndarAlreadyExistsException;
-import com.pduarteo.reserva_salas.support.exceptions.SalaNotFoundException;
+import com.pduarteo.reserva_salas.support.exceptions.RegraNegocioException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
@@ -15,24 +14,6 @@ import java.net.URI;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-
-    @ExceptionHandler(SalaNotFoundException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ProblemDetail handleNotFoundException(SalaNotFoundException ex, HttpServletRequest req) {
-        var pd = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
-        pd.setTitle("Sala Não Encontrada");
-        pd.setType(URI.create(req.getRequestURI()));
-        return pd;
-    }
-
-    @ExceptionHandler(NomeAndarAlreadyExistsException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ProblemDetail handleNomeAndarAlreadyExistsException(NomeAndarAlreadyExistsException ex, HttpServletRequest req) {
-        var pd = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
-        pd.setTitle("Conflito de Nome e Andar");
-        pd.setType(URI.create(req.getRequestURI()));
-        return pd;
-    }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -53,6 +34,15 @@ public class GlobalExceptionHandler {
         pd.setType(URI.create(req.getRequestURI()));
         pd.setProperty("violations", ex.getConstraintViolations().stream()
                 .map(v -> v.getPropertyPath() + ": " + v.getMessage()).toList());
+        return pd;
+    }
+
+    @ExceptionHandler(RegraNegocioException.class)
+    @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+    public ProblemDetail handleCapacidadeExcedida(RegraNegocioException ex, HttpServletRequest req) {
+        var pd = ProblemDetail.forStatusAndDetail(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage());
+        pd.setTitle("Regra de Negócio Violada");
+        pd.setType(URI.create(req.getRequestURI()));
         return pd;
     }
 }
