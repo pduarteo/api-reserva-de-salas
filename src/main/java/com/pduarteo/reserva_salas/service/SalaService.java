@@ -7,6 +7,8 @@ import com.pduarteo.reserva_salas.repository.SalaRepository;
 import com.pduarteo.reserva_salas.support.exceptions.NomeAndarAlreadyExistsException;
 import com.pduarteo.reserva_salas.support.exceptions.SalaNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -53,18 +55,16 @@ public class SalaService {
                 .orElseThrow(() -> new SalaNotFoundException(id));
     }
 
-    public List<RetornoSalaDTO> listarSalas() {
-        List<Sala> salas = salaRepository.findAll();
-        return salas.stream()
-                .map(sala -> new RetornoSalaDTO(
-                        sala.getId(),
-                        sala.getNome(),
-                        sala.getCapacidade(),
-                        sala.getAndar(),
-                        sala.getRecursos(),
-                        sala.getAtiva()
-                ))
-                .toList();
+    public Page<RetornoSalaDTO> listarSalas(Pageable pageable) {
+        Page<Sala> salas = salaRepository.findAll(pageable);
+        return salas.map(sala -> new RetornoSalaDTO(
+                sala.getId(),
+                sala.getNome(),
+                sala.getCapacidade(),
+                sala.getAndar(),
+                sala.getRecursos(),
+                sala.getAtiva()
+        ));
     }
 
     public RetornoSalaDTO atualizarSala(Long id, CriarSalaDTO sala){

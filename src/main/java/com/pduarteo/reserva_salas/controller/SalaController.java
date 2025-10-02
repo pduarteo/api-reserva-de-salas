@@ -6,6 +6,8 @@ import com.pduarteo.reserva_salas.model.Sala;
 import com.pduarteo.reserva_salas.service.SalaService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -26,8 +28,8 @@ public class SalaController {
     }
 
     @GetMapping
-    public ResponseEntity<List<RetornoSalaDTO>> buscarSalas(){
-        return ResponseEntity.ok().body(salaService.listarSalas());
+    public ResponseEntity<Page<RetornoSalaDTO>> buscarSalas(Pageable pageable){
+        return ResponseEntity.ok().body(salaService.listarSalas(pageable));
     }
 
     @PostMapping
